@@ -82,9 +82,13 @@ export default defineComponent({
 <template>
   <div class="demo-app">
     <div class="demo-app-main">
-      <FullCalendar :options="calendarOptions" />
+      <!-- ref="fullCalendar" を追加 -->
+      <FullCalendar ref="fullCalendar" :options="calendarOptions" />
     </div>
   </div>
+  <el-row class="mb-4">
+    <el-button>Default</el-button>
+  </el-row>
 </template>
 
 <style lang="css">
@@ -124,5 +128,4 @@ b {
   width: 1200px;
   margin: 0 auto;
 }
-
 </style>
