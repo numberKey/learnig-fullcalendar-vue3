@@ -12,9 +12,12 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { INITIAL_EVENTS, createEventId } from "./event-utils";
 
+import ViewSelector from "./parts/ViewSelector.vue";
+
 export default defineComponent({
   components: {
     FullCalendar,
+    ViewSelector,
   },
   data() {
     return {
@@ -25,11 +28,11 @@ export default defineComponent({
           interactionPlugin, // needed for dateClick
         ],
         headerToolbar: {
-          left: "prev,next today",
+          left: "prev today next",
           center: "title",
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         },
-        initialView: "dayGridMonth",
+        initialView: "timeGridWeek",
         initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
         editable: true,
         selectable: true,
@@ -39,8 +42,17 @@ export default defineComponent({
         select: this.handleDateSelect,
         eventClick: this.handleEventClick,
         eventsSet: this.handleEvents,
+        fixedWeekCount: false,
+        // 追加部分
+        datesSet: this.handleDatesChange,
+        // 追加部分終了
       } as CalendarOptions,
       currentEvents: [] as EventApi[],
+      // 追加部分開始
+      title: null,
+      arg: null,
+      currentDate: new Date(),
+      // 追加部分終了
     };
   },
   methods: {
@@ -75,20 +87,77 @@ export default defineComponent({
     handleEvents(events: EventApi[]) {
       this.currentEvents = events;
     },
+    // 追加部分開始
+    changeViewMode(viewMode: string) {
+      this.$refs.fullCalendar.getApi().changeView(viewMode);
+    },
+    clickToday() {
+      this.$refs.fullCalendar.getApi().today();
+    },
+    clickPrev() {
+      this.$refs.fullCalendar.getApi().prev();
+    },
+    clickNext() {
+      this.$refs.fullCalendar.getApi().next();
+    },
+    handleDatesChange(arg) {
+      // カレンダーの表示範囲が変更されたときの処理
+      this.title = arg.view.title;
+      this.arg = arg;
+      this.currentDate = this.$refs.fullCalendar.getApi().getDate();
+    },
+    handleChangeSelectDate() {
+      // 日付選択が変更されたときの処理
+      this.$refs.fullCalendar.getApi().gotoDate(this.currentDate);
+    },
+    // 追加部分終了
   },
 });
 </script>
 
 <template>
-  <div class="demo-app">
-    <div class="demo-app-main">
-      <!-- ref="fullCalendar" を追加 -->
-      <FullCalendar ref="fullCalendar" :options="calendarOptions" />
-    </div>
-  </div>
-  <el-row class="mb-4">
-    <el-button>Default</el-button>
-  </el-row>
+  <el-container>
+    <!-- 追加部分開始 -->
+    <el-header>
+      <el-row justify="center">
+        <el-col :span="3">
+          <el-button @click="clickPrev">前</el-button>
+          <el-button @click="clickToday">今日</el-button>
+          <el-button @click="clickNext">次</el-button>
+        </el-col>
+        <el-col :span="3">
+          <h2>{{ title }}</h2>
+        </el-col>
+        <el-col :span="3">
+          <ViewSelector @change-view-mode="changeViewMode" />
+        </el-col>
+      </el-row>
+    </el-header>
+    <el-container>
+      <el-aside>
+        <el-row>
+          <el-date-picker
+            type="date"
+            placeholder="Pick a day"
+            v-model="currentDate"
+            @change="handleChangeSelectDate"
+          />
+        </el-row>
+        <el-row>
+          {{ arg }}
+        </el-row>
+      </el-aside>
+      <!-- 追加部分終了 -->
+      <el-main>
+        <div class="demo-app">
+          <div class="demo-app-main">
+            <!-- ref="fullCalendar" を追加 -->
+            <FullCalendar ref="fullCalendar" :options="calendarOptions" />
+          </div>
+        </div>
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
 <style lang="css">
@@ -127,5 +196,24 @@ b {
 .fc {
   width: 1200px;
   margin: 0 auto;
+}
+
+.el-container {
+  height: 100vh;
+}
+
+.el-header {
+  height: 60px;
+  background-color: bisque;
+}
+
+.el-aside {
+  width: 400px;
+  background-color: #d3dce6;
+  height: calc(100vh - 60px);
+}
+
+.el-main {
+  height: calc(100vh - 60px);
 }
 </style>
